@@ -11,6 +11,12 @@ from sglang.srt.layers.moe.utils import (
     initialize_moe_config,
     is_tbo_enabled,
     should_use_flashinfer_cutlass_moe_fp4_allgather,
+    is_peo_enabled,
+    get_peo_overlap_method,
+    get_peo_num_rounds,
+    get_peo_deepep_num_sms,
+    get_peo_up_deepgemm_num_sms,
+    get_peo_down_deepgemm_num_sms,
 )
 
 __all__ = [
@@ -27,4 +33,10 @@ __all__ = [
     "is_tbo_enabled",
     "get_tbo_token_distribution_threshold",
     "get_deepep_config",
+    "is_peo_enabled",
+    "get_peo_overlap_method",
+    "get_peo_num_rounds",
+    "get_peo_deepep_num_sms",
+    "get_peo_up_deepgemm_num_sms",
+    "get_peo_down_deepgemm_num_sms",
 ]

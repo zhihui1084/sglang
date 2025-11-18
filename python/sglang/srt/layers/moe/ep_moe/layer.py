@@ -4,8 +4,10 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 import torch
+import torch.distributed as dist
 
 from sglang.srt.environ import envs
+from sglang.srt.batch_overlap import per_expert_overlap
 from sglang.srt.hardware_backend.npu.quantization.fused_moe_method_npu import (
     NPUW4A16Int4DynamicMoEMethod,
 )
@@ -21,6 +23,14 @@ from sglang.srt.layers.moe.token_dispatcher.deepep import (
     DeepEPNormalCombineInput,
 )
 from sglang.srt.layers.moe.topk import TopKOutput
+from sglang.srt.layers.moe.utils import (
+    is_peo_enabled,
+    get_peo_overlap_method,
+    get_peo_num_rounds,
+    get_peo_deepep_num_sms,
+    get_peo_up_deepgemm_num_sms,
+    get_peo_down_deepgemm_num_sms,
+)
 from sglang.srt.layers.quantization.base_config import QuantizationConfig
 from sglang.srt.layers.quantization.fp8 import Fp8Config
 from sglang.srt.layers.quantization.fp8_kernel import is_fp8_fnuz
@@ -530,9 +540,75 @@ class NpuFuseEPMoE(DeepEPMoE):
             )
 
 
+def get_num_device_sms():
+    assert torch.cuda.is_available()
+    device = torch.cuda.current_device()
+    props = torch.cuda.get_device_properties(device)
+    return props.multi_processor_count
+
+class PeoDeepEPMoE(DeepEPMoE):
+    def __init__(
+        self,
+        num_experts: int,
+        top_k: int,
+        hidden_size: int,
+        intermediate_size: int,
+        layer_id: int,
+        num_fused_shared_experts: int = 0,
+        params_dtype: Optional[torch.dtype] = None,
+        quant_config: Optional[QuantizationConfig] = None,
+        prefix: str = "",
+        activation: str = "silu",
+        routed_scaling_factor: Optional[float] = None,
+        **kwargs,
+    ):
+        super().__init__(num_experts, top_k, hidden_size, intermediate_size,
+                         layer_id, num_fused_shared_experts, params_dtype, quant_config, prefix, activation,
+                         routed_scaling_factor, **kwargs)
+        self.overlap_method = get_peo_overlap_method()
+        self.num_rounds = get_peo_num_rounds()
+        self.num_device_sms = get_num_device_sms()
+        self.num_deepep_sms = get_peo_deepep_num_sms()
+        self.num_up_deepgemm_sms = get_peo_up_deepgemm_num_sms()
+        self.num_down_deepgemm_sms = get_peo_down_deepgemm_num_sms()
+        self.num_ranks = dist.get_world_size()
+
+        assert self.num_deepep_sms <= self.num_device_sms, f"num_deepep_sms {self.num_deepep_sms} > num_device_sms {self.num_device_sms}"
+        assert self.num_up_deepgemm_sms is None or self.num_up_deepgemm_sms <= self.num_device_sms, f"num_up_deepgemm_sms {self.num_up_deepgemm_sms} > num_device_sms {self.num_device_sms}"
+        assert self.num_down_deepgemm_sms is None or self.num_down_deepgemm_sms <= self.num_device_sms, f"num_down_deepgemm_sms {self.num_down_deepgemm_sms} > num_device_sms {self.num_device_sms}"
+
+        self.comm_stream = self.dispatcher.get_buffer().get_comm_stream()
+
+    def run_moe_core(
+        self,
+        dispatch_output: DispatchOutput,
+    ):
+
+        if self.deprecate_flag:
+            return FusedMoE.run_moe_core(
+                self,
+                dispatch_output,
+            )
+        else:
+            raise NotImplementedError("Not supported for PEO")
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        topk_output: TopKOutput,
+        forward_shared_experts=None,
+        alt_stream=None,
+        disable_sbo=False,
+    ):
+        return per_expert_overlap.execute_peo(self, hidden_states, topk_output)
+
+
 def get_moe_impl_class(quant_config: Optional[QuantizationConfig]):
     if get_moe_a2a_backend().is_deepep() or get_moe_a2a_backend().is_mooncake():
-        return DeepEPMoE
+        if is_peo_enabled():
+            return PeoDeepEPMoE
+        else:
+            return DeepEPMoE
     if get_moe_a2a_backend().is_ascend_fuseep():
         return NpuFuseEPMoE
 
