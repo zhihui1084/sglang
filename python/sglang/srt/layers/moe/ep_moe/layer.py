@@ -652,6 +652,7 @@ class PeoDeepEPMoE(DeepEPMoE):
                 send_num_sms=self.num_device_sms if round_id == (self.num_rounds - 1) else self.num_deepep_sms,
                 recv_num_sms=self.num_device_sms,
                 hook_use_comm_stream=False,
+                is_x_in_round=True,
             )
 
             combine_state = self.dispatcher.combine_a_peo(
@@ -787,6 +788,7 @@ class PeoDeepEPMoE(DeepEPMoE):
                     send_num_sms=self.num_device_sms if round_id == (self.num_rounds - 1) else self.num_deepep_sms,
                     recv_num_sms=self.num_device_sms,
                     hook_use_comm_stream=False,
+                    is_x_in_round=True,
                 )
                 combine_state = self.dispatcher.combine_a_peo(
                     combine_input=moe_hidden_states[round_id],
