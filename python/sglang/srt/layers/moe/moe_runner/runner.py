@@ -119,7 +119,7 @@ class PeoMoeRunner(MoeRunner):
         super().__init__(runner_backend, config)
 
     def run(
-        self, dispatch_output: DispatchOutput, quant_info: MoeQuantInfo, start_idx: torch.Tensor, end_idx: torch.Tensor
+        self, dispatch_output: DispatchOutput, quant_info: MoeQuantInfo
     ) -> CombineInput:
 
         if self.fused_func is not None:
@@ -137,8 +137,6 @@ class PeoMoeRunner(MoeRunner):
         if self.meta_overlap_args is not None:
             running_state["meta_overlap_args"] = self.meta_overlap_args
 
-        running_state["start_idx"] = start_idx
-        running_state["end_idx"] = end_idx
         runner_input = self.pre_permute_func(
             dispatch_output, quant_info, self.config, running_state
         )

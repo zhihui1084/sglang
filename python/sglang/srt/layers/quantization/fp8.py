@@ -1551,8 +1551,8 @@ class PeoFp8MoEMethod(Fp8MoEMethod):
 
         if self.runner.runner_backend.is_deep_gemm():
 
-            w13_weight = layer.w13_weight
-            w2_weight = layer.w2_weight
+            w13_weight = layer.w13_weight[start_idx:end_idx]
+            w2_weight = layer.w2_weight[start_idx:end_idx]
 
             if self.block_quant:
                 block_shape = self.quant_config.weight_block_size
@@ -1597,7 +1597,7 @@ class PeoFp8MoEMethod(Fp8MoEMethod):
             hidden_states_scale = dispatch_output.hidden_states_scale[start_idx:end_idx],
             topk_weights=dispatch_output.topk_weights,
             topk_ids=dispatch_output.topk_ids,
-            masked_m=dispatch_output.masked_m,
+            masked_m=dispatch_output.masked_m[start_idx:end_idx],
             expected_m=dispatch_output.expected_m,
         )
         return self.runner.run(new_dispatch_output, quant_info)

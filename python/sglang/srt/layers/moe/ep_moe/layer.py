@@ -660,9 +660,6 @@ class PeoDeepEPMoE(DeepEPMoE):
                 peo_overlap_args=peo_overlap_args,
             )
 
-            if round_id == self.num_rounds - 1 and self.down_output is not None:
-                del self.down_output
-
         # combine recv
         combined_x = self.dispatcher.combine_b_peo(inner_state=combine_state)
 
@@ -813,10 +810,8 @@ class PeoDeepEPMoE(DeepEPMoE):
 
         with torch.cuda.stream(current_stream):
             if self.overlap_method == 1:
-                logger.info(f"Using overlap_method: {self.overlap_method}")
                 return self.forward_overlap_1(hidden_states, topk_output, current_stream)
             elif self.overlap_method == 2 or self.overlap_method == 3:
-                logger.info(f"Using overlap_method: {self.overlap_method}")
                 return self.forward_overlap_2_3(hidden_states, topk_output, current_stream)
             elif self.overlap_method == 4:
                 return self.forward_overlap_4(hidden_states, topk_output, current_stream)

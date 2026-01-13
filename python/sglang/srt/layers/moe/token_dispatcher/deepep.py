@@ -909,6 +909,7 @@ class _DeepEPDispatcherImplLowLatencyPEO(_DeepEPDispatcherImplLowLatency):
             send_num_sms=peo_overlap_args.send_num_sms,
             recv_num_sms=peo_overlap_args.recv_num_sms,
             hook_use_comm_stream=peo_overlap_args.hook_use_comm_stream,
+            is_x_in_round=peo_overlap_args.is_x_in_round,
         )
 
         if peo_overlap_args.round_id == 0:
