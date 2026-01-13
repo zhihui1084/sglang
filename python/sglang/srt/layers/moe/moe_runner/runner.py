@@ -38,6 +38,7 @@ class MoeRunner:
             self.runner_core = TritonKernelsRunnerCore(config)
         elif runner_backend.is_deep_gemm():
             if is_peo_enabled():
+                logger.info("Using PEO DeepGemmRunnerCore")
                 self.runner_core = PeoDeepGemmRunnerCore(config)
             else:
                 self.runner_core = DeepGemmRunnerCore(config)

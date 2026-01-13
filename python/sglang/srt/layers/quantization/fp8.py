@@ -183,6 +183,7 @@ class Fp8Config(QuantizationConfig):
             return Fp8LinearMethod(self)
         elif isinstance(layer, FusedMoE):
             if is_peo_enabled():
+                logger.info("Detected fp8 moe layer. Using PEO.")
                 return PeoFp8MoEMethod(self)
             else:
                 return Fp8MoEMethod(self)

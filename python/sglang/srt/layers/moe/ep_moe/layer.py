@@ -822,6 +822,7 @@ class PeoDeepEPMoE(DeepEPMoE):
 def get_moe_impl_class(quant_config: Optional[QuantizationConfig]):
     if get_moe_a2a_backend().is_deepep() or get_moe_a2a_backend().is_mooncake():
         if is_peo_enabled():
+            logger.info("Using PeoDeepEPMoE")
             return PeoDeepEPMoE
         else:
             return DeepEPMoE

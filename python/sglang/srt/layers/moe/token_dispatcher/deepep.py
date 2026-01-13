@@ -960,6 +960,7 @@ class DeepEPDispatcher(BaseDispatcher):
 
         if self.deepep_mode.enable_low_latency():
             if is_peo_enabled():
+                logger.info("Using PEO for DeepEP")
                 self._low_latency_dispatcher = _DeepEPDispatcherImplLowLatencyPEO(
                     return_recv_hook=return_recv_hook,
                     **common_kwargs,
