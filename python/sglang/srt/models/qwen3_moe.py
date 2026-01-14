@@ -758,6 +758,8 @@ class Qwen3MoeDecoderLayer(nn.Module):
         captured_last_layer_outputs: Optional[List[torch.Tensor]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
 
+        if residual is not None and hidden_states.shape[0] != residual.shape[0]:
+            hidden_states = hidden_states[: residual.shape[0]]
         hidden_states, residual = (
             self.layer_communicator.prepare_attn_and_capture_last_layer_outputs(
                 hidden_states,
