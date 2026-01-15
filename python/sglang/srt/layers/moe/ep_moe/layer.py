@@ -2775,6 +2775,7 @@ class PeoDeepEPMoE(DeepEPMoE):
                 num_experts_per_round = self.num_experts // self.num_ranks // self.num_rounds
                 start_idx = num_experts_per_round * round_id
                 end_idx = start_idx + num_experts_per_round
+                torch.cuda.synchronize()
                 if self.layer_id == 0 and dispatch_output.hidden_states.shape[0] > 0:
                     logger.info(f"layer_id: {self.layer_id}, round_id: {round_id}, dispatch recv: hidden_states: {dispatch_output.hidden_states[start_idx:end_idx]}")
                 moe_hidden_state = self.run_moe_core(dispatch_output, start_idx, end_idx)
